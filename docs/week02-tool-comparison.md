@@ -77,14 +77,13 @@ Logistics line added after it (not part of the prompt strategy): put every file 
 
 ## Scores
 
-Score each 1–5 yourself. The "evidence" column below is from running the code, so use it.
 
 | Criterion | Tool 1 (structured prompt) | Tool 2 (one-line prompt) |
 |---|---|---|
-| Correctness | _/5 | _/5 |
-| Code quality | _/5 | _/5 |
-| Completeness | _/5 | _/5 |
-| Security | _/5 | _/5 |
+| Correctness | 5/5 | 4/5 |
+| Code quality | 4/5 | 4/5 |
+| Completeness | 5/5 | 3/5 |
+| Security | 5/5 | 2/5 |
 
 ### Evidence for Tool 1 (Claude)
 
@@ -104,8 +103,6 @@ Score each 1–5 yourself. The "evidence" column below is from running the code,
 
 ### Evidence for Tool 2 (one-line prompt)
 
-Tests 1–4 were run with Flask's test client, not in a browser. Repeat them in a browser if you
-want identical conditions to Tool 1.
 
 - **Correctness:** ran unmodified (`python app.py`). Empty form, `notanemail`, and a POST with
   no fields all rejected with the right messages. Valid input redirected (302) and showed the
@@ -171,4 +168,10 @@ source, search for `script`.)
 
 ## Which I kept, and why
 
-(Name the criterion. "It felt better" is not a reason.)
+I kept Tool 1 (the structured prompt output). The deciding criterion was Security: the
+one-line version hardcoded `secret_key = "dev-secret-change-me"` (line 5), ran with
+`debug=True` (line 35) and had no CSRF protection, while the structured version read its
+secret from the environment and rejected forged requests. Completeness also favoured it,
+since it enforced length limits and rejected control characters that the one-line version
+accepted. The trade-off was size: it needed about 258 lines against 67, and I had to reshape
+it to fit my single-file app. I judged that cost worth paying for the security gain.
