@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Message received{% endblock %}
+
+{% block content %}
+<h1>Thank you, {{ name }}!</h1>
+<p class="success" role="status">Your message has been received. We'll get back to you soon.</p>
+<p><a href="{{ url_for('contact') }}">Send another message</a></p>
+{% endblock %}

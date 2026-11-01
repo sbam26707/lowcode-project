@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Contact us{% endblock %}
+
+{% block content %}
+<h1>Contact us</h1>
+
+{% if errors %}
+  <div class="error-summary" role="alert">
+    Please fix the problems below and submit the form again.
+  </div>
+{% endif %}
+
+{# novalidate: the browser must not block submission, so the server-side
+   validation is always what the user sees (and is the real source of truth). #}
+<form method="post" action="{{ url_for('contact.form') }}" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="field{% if errors.name %} has-error{% endif %}">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="{{ values.name or '' }}"
+           maxlength="100" autocomplete="name" required
+           {% if errors.name %}aria-invalid="true" aria-describedby="name-error"{% endif %}>
+    {% if errors.name %}<p class="error" id="name-error">{{ errors.name }}</p>{% endif %}
+  </div>
+
+  <div class="field{% if errors.email %} has-error{% endif %}">
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" value="{{ values.email or '' }}"
+           maxlength="254" autocomplete="email" required
+           {% if errors.email %}aria-invalid="true" aria-describedby="email-error"{% endif %}>
+    {% if errors.email %}<p class="error" id="email-error">{{ errors.email }}</p>{% endif %}
+  </div>
+
+  <div class="field{% if errors.message %} has-error{% endif %}">
+    <label for="message">Message</label>
+    <textarea id="message" name="message" rows="6" maxlength="5000" required
+              {% if errors.message %}aria-invalid="true" aria-describedby="message-error"{% endif %}>{{ values.message or '' }}</textarea>
+    {% if errors.message %}<p class="error" id="message-error">{{ errors.message }}</p>{% endif %}
+  </div>
+
+  <button type="submit">Send message</button>
+</form>
+{% endblock %}
