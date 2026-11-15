@@ -1,4 +1,5 @@
 """IT Investment Tracker - proof of concept (Flask + SQLite)."""
+import math
 import os
 import re
 from collections import Counter
@@ -90,6 +91,9 @@ def form_num(name, errors, label, required=True, minimum=None):
     try:
         v = float(raw.replace(",", ""))
     except ValueError:
+        errors.append(f"{label[0].upper() + label[1:]} must be a number.")
+        return None
+    if not math.isfinite(v):
         errors.append(f"{label[0].upper() + label[1:]} must be a number.")
         return None
     if minimum is not None and v < minimum:
