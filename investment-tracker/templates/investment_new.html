@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}New investment{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{{ url_for('investments') }}">Investments</a> &rsaquo; New</p>
+<h1>Create a new investment</h1>
+<p class="lead">Start with a name and short description. You can add value, cost, timeline and resource details afterwards, then submit for approval.</p>
+<form method="post" novalidate>
+  <div class="field">
+    <label for="name">Investment name</label>
+    <p class="hint" id="name-hint">Must be unique.</p>
+    <input type="text" id="name" name="name" value="{{ name }}" aria-describedby="name-hint" required>
+  </div>
+  <div class="field">
+    <label for="description">Short description</label>
+    <textarea id="description" name="description">{{ description }}</textarea>
+  </div>
+  <div class="actions">
+    <button class="btn" type="submit">Create investment</button>
+    <a href="{{ url_for('investments') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

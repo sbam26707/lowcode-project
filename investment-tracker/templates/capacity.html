@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Capacity pool{% endblock %}
+{% block content %}
+<h1>Capacity pool</h1>
+<p class="lead">Organisation-wide delivery resource available per role (FTEs), compared with demand from all investments combined, using forecast phase dates.</p>
+
+<h2>Over-allocation report</h2>
+{% if cap.over %}
+<div class="msg msg-warning" role="status">Warning: {{ cap.over|length }} role-month combination{{ '' if cap.over|length == 1 else 's' }} over-allocated.</div>
+<div class="table-wrap"><table>
+  <caption class="visually-hidden">Over-allocated roles by month</caption>
+  <thead><tr><th scope="col">Role</th><th scope="col">Month</th><th scope="col" class="num">Demand (FTE)</th><th scope="col" class="num">Pool (FTE)</th><th scope="col" class="num">Shortfall (FTE)</th><th scope="col">Contributing investments</th></tr></thead>
+  <tbody>{% for o in cap.over %}<tr><th scope="row">{{ o.role }}</th><td>{{ o.month|month }}</td><td class="num">{{ o.demand|num }}</td><td class="num">{{ o.pool|num }}</td><td class="num"><strong>{{ o.shortfall|num }}</strong></td>
+    <td>{% for i, n, f in o.investments %}<a href="{{ url_for('investment_tab', iid=i, tab='capacity') }}">{{ n }}</a> ({{ f|num }}){{ ', ' if not loop.last }}{% endfor %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}<p>No over-allocation found from this month onwards.</p>{% endif %}
+
+<h2>Pool and 12-month demand</h2>
+<form method="post" aria-label="Edit capacity pool">
+<div class="table-wrap"><table>
+  <caption class="visually-hidden">Capacity pool and monthly demand by role. Cells marked Over are over-allocated.</caption>
+  <thead><tr><th scope="col">Role</th><th scope="col" class="num">Pool (FTE)</th>{% for m in cap.months %}<th scope="col" class="num">{{ m|month }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for r in roles %}<tr><th scope="row"><label for="pool_{{ r }}">{{ r }}</label></th>
+    <td class="num">{% if can_edit %}<input type="number" step="0.5" min="0" id="pool_{{ r }}" name="pool_{{ r }}" value="{{ pool.get(r, 0)|num }}" style="max-width:90px">{% else %}<span id="pool_{{ r }}">{{ pool.get(r, 0)|num }}</span>{% endif %}</td>
+    {% for m in cap.months %}{% set dm = cap.demand.get((r, m), 0) %}<td class="num">{{ dm|num }}{% if dm > pool.get(r, 0) + 0.0001 %} <strong>(Over)</strong>{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody>
+</table></div>
+{% if can_edit %}<div class="actions"><button class="btn" type="submit">Save capacity pool</button></div>
+{% else %}<p class="muted">Only the PMO / portfolio team can edit the pool. Switch to a PMO role to edit.</p>{% endif %}
+</form>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "inv_base.html" %}
+{% block tab %}
+<h2>History (audit log)</h2>
+<p class="muted">Every change to this investment, newest first. Read-only.</p>
+{% set show_inv = false %}
+{% include "_audit_table.html" %}
+{% endblock %}

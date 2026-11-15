@@ -1,0 +1,26 @@
+{% extends "inv_base.html" %}
+{% block tab %}
+<h2>Cost</h2>
+<p class="muted">Per calendar financial year, in euro, exclusive of VAT. Variance is forecast minus budget.</p>
+<div class="table-wrap"><table>
+  <caption class="visually-hidden">Cost by financial year</caption>
+  <thead><tr><th scope="col">Financial year</th><th scope="col" class="num">Budget</th><th scope="col" class="num">Actual</th><th scope="col" class="num">Forecast</th><th scope="col" class="num">Variance</th>{% if can_budget or can_forecast %}<th scope="col">Action</th>{% endif %}</tr></thead>
+  <tbody>{% for c in costs %}{% set v = c.forecast - c.budget %}<tr><th scope="row">FY{{ c.fy }}</th><td class="num">{{ c.budget|eur }}</td><td class="num">{{ c.actual|eur }}</td><td class="num">{{ c.forecast|eur }}</td><td class="num">{{ variance_text(v, c.budget) }}</td>
+    {% if can_budget or can_forecast %}<td><a href="{{ url_for('investment_tab', iid=inv.id, tab='cost', fy=c.fy) }}#cost-form">Edit<span class="visually-hidden"> FY{{ c.fy }}</span></a></td>{% endif %}</tr>
+  {% else %}<tr><td colspan="6">No cost figures recorded.</td></tr>{% endfor %}</tbody>
+  {% if costs %}<tfoot><tr><th scope="row">Total</th><td class="num">{{ tot.budget|eur }}</td><td class="num">{{ tot.actual|eur }}</td><td class="num">{{ tot.forecast|eur }}</td><td class="num">{{ variance_text(tot.variance, tot.budget) }}</td>{% if can_budget or can_forecast %}<td></td>{% endif %}</tr></tfoot>{% endif %}
+</table></div>
+{% if can_budget or can_forecast or can_actual %}
+<h3 id="cost-form">{{ 'Edit' if edit else 'Add or update' }} a financial year</h3>
+<p class="hint">{% if can_budget %}As the owner you can set budget and forecast.{% elif can_actual %}As Finance you can set actual and forecast.{% endif %} Entering an existing year updates it.</p>
+<form method="post" action="{{ url_for('save_cost', iid=inv.id) }}" novalidate>
+  <div class="grid-form">
+    <div class="field"><label for="fy">Financial year</label><input type="number" id="fy" name="fy" value="{{ edit.fy if edit else default_fy }}" required></div>
+    <div class="field"><label for="budget">Budget (€)</label><input type="number" step="any" min="0" id="budget" name="budget" value="{{ edit.budget|int if edit else '' }}" {{ '' if can_budget else 'disabled' }}></div>
+    <div class="field"><label for="actual">Actual (€)</label><input type="number" step="any" min="0" id="actual" name="actual" value="{{ edit.actual|int if edit else '' }}" {{ '' if can_actual else 'disabled' }}></div>
+    <div class="field"><label for="forecast">Forecast (€)</label><input type="number" step="any" min="0" id="forecast" name="forecast" value="{{ edit.forecast|int if edit else '' }}" {{ '' if can_forecast else 'disabled' }}></div>
+  </div>
+  <div class="actions"><button class="btn" type="submit">Save cost figures</button></div>
+</form>
+{% else %}<p class="muted">Owners edit budget and forecast while the investment is a draft or returned; Finance records actuals and forecasts at any time.</p>{% endif %}
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "inv_base.html" %}
+{% block tab %}
+<h2>Realisation</h2>
+<p class="muted">Go-live date: {{ golive|dmy if golive else '—' }}. Status is calculated from the latest measurement against target (lower-is-better metrics are inverted).</p>
+<div class="table-wrap"><table>
+  <caption class="visually-hidden">Realisation status per metric</caption>
+  <thead><tr><th scope="col">Metric</th><th scope="col">Direction</th><th scope="col" class="num">Baseline</th><th scope="col" class="num">Target</th><th scope="col">Target date</th><th scope="col" class="num">Latest</th><th scope="col">Progress to target</th><th scope="col">Expected by now</th><th scope="col">Status</th></tr></thead>
+  <tbody>{% for x in metrics %}{% set m = x.m %}<tr><th scope="row">{{ m.name }} <span class="muted">({{ m.unit }})</span></th><td>{{ 'Higher' if m.direction == 'higher' else 'Lower' }} is better</td><td class="num">{{ m.baseline|num }}</td><td class="num">{{ m.target|num }}</td><td>{{ m.target_date|dmy }}</td>
+    <td class="num">{{ x.latest.value|num if x.latest else '—' }}</td><td>{{ x.progress|pct }}</td><td>{{ x.expected|pct }}</td><td>{{ status_badge(x.status) }}</td></tr>
+  {% else %}<tr><td colspan="9">No metrics defined.</td></tr>{% endfor %}</tbody>
+</table></div>
+
+<h3>Measurements</h3>
+{% for x in metrics %}{% if x.ms %}
+<div class="table-wrap"><table>
+  <caption>{{ x.m.name }}</caption>
+  <thead><tr><th scope="col">Date</th><th scope="col" class="num">Value ({{ x.m.unit }})</th></tr></thead>
+  <tbody>{% for ms in x.ms %}<tr><td>{{ ms.date|dmy }}</td><td class="num">{{ ms.value|num }}</td></tr>{% endfor %}</tbody>
+</table></div>{% endif %}{% endfor %}
+{% if p.can_track %}
+{% if metrics %}
+<form method="post" action="{{ url_for('add_measurement', iid=inv.id) }}" novalidate>
+  <fieldset><legend>Record a measurement</legend><div class="grid-form">
+    <div class="field"><label for="ms_metric">Metric</label><select id="ms_metric" name="metric_id">{% for x in metrics %}<option value="{{ x.m.id }}">{{ x.m.name }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="ms_date">Date</label><input type="date" id="ms_date" name="date" value="{{ today.isoformat() }}"></div>
+    <div class="field"><label for="ms_val">Actual value</label><input type="number" step="any" id="ms_val" name="value"></div>
+  </div><div class="actions"><button class="btn" type="submit">Record measurement</button></div></fieldset>
+</form>{% endif %}
+{% else %}<p class="muted">Measurements can be recorded by the owner (once approved) or the PMO.</p>{% endif %}
+
+<h3>Financial benefits: target vs realised</h3>
+<div class="table-wrap"><table>
+  <caption class="visually-hidden">Financial benefit realisation</caption>
+  <thead><tr><th scope="col">Type</th><th scope="col">Description</th><th scope="col" class="num">Target</th><th scope="col" class="num">Realised</th>{% if p.can_realise_fin %}<th scope="col">Update realised</th>{% endif %}</tr></thead>
+  <tbody>{% for b in fin %}<tr><th scope="row">{{ b.type }}</th><td>{{ b.description }}</td><td class="num">{{ b.amount|eur }}</td><td class="num">{{ b.realised_amount|eur }}</td>
+    {% if p.can_realise_fin %}<td><form class="inline-form" method="post" action="{{ url_for('save_realised', iid=inv.id, bid=b.id) }}"><label class="visually-hidden" for="rz{{ b.id }}">Realised amount (€) for {{ b.description }}</label><input type="number" step="any" min="0" id="rz{{ b.id }}" name="realised" value="{{ b.realised_amount|int }}" style="max-width:130px"> <button class="btn btn-small" type="submit">Save</button></form></td>{% endif %}</tr>
+  {% else %}<tr><td colspan="5">None recorded.</td></tr>{% endfor %}</tbody>
+</table></div>
+
+<h3>Post-implementation reviews</h3>
+{% if not reviews %}<p>Reviews are scheduled (6 and 12 months after go-live) once the investment is approved.</p>{% endif %}
+{% for r in reviews %}
+<form method="post" action="{{ url_for('save_review', iid=inv.id, rid=r.id) }}" novalidate>
+  <fieldset><legend>{{ r.months_after }}-month review {% if r.due %}— due {{ r.due|dmy }}{% endif %} {{ status_badge('Complete' if r.review_date else 'Not started') }}</legend>
+  {% if p.can_track %}
+    <div class="grid-form">
+      <div class="field"><label for="rv_d{{ r.id }}">Review date</label><input type="date" id="rv_d{{ r.id }}" name="review_date" value="{{ r.review_date or '' }}"></div>
+      <div class="field"><label for="rv_u{{ r.id }}">Reviewer</label><select id="rv_u{{ r.id }}" name="reviewer_id"><option value="">Choose…</option>{% for u in users %}<option value="{{ u.id }}" {{ 'selected' if u.id == r.reviewer_id }}>{{ u.name }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="field"><label for="rv_f{{ r.id }}">Findings</label><textarea id="rv_f{{ r.id }}" name="findings">{{ r.findings }}</textarea></div>
+    <div class="field"><label for="rv_l{{ r.id }}">Lessons learned</label><textarea id="rv_l{{ r.id }}" name="lessons">{{ r.lessons }}</textarea></div>
+    <button class="btn btn-small" type="submit">Save review</button>
+  {% else %}
+    <dl class="facts"><dt>Review date</dt><dd>{{ r.review_date|dmy }}</dd><dt>Reviewer</dt><dd>{{ r.reviewer_name or '—' }}</dd><dt>Findings</dt><dd class="pre">{{ r.findings or '—' }}</dd><dt>Lessons learned</dt><dd class="pre">{{ r.lessons or '—' }}</dd></dl>
+  {% endif %}
+  </fieldset>
+</form>
+{% endfor %}
+{% endblock %}

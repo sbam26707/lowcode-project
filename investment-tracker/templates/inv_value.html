@@ -1,0 +1,78 @@
+{% extends "inv_base.html" %}
+{% block tab %}
+<h2>Value</h2>
+<h3>Quantified metrics (benefits)</h3>
+<p class="muted">At least one is required before submission.</p>
+<div class="table-wrap"><table>
+  <caption class="visually-hidden">Quantified metrics</caption>
+  <thead><tr><th scope="col">Metric</th><th scope="col">Unit</th><th scope="col">Direction</th><th scope="col" class="num">Baseline</th><th scope="col" class="num">Target</th><th scope="col">Target date</th><th scope="col">Benefit owner</th>{% if p.can_edit %}<th scope="col">Action</th>{% endif %}</tr></thead>
+  <tbody>{% for x in metrics %}{% set m = x.m %}<tr><th scope="row">{{ m.name }}</th><td>{{ m.unit }}</td><td>{{ 'Higher is better' if m.direction == 'higher' else 'Lower is better' }}</td><td class="num">{{ m.baseline|num }}</td><td class="num">{{ m.target|num }}</td><td>{{ m.target_date|dmy }}</td><td>{{ m.owner_name }}</td>
+    {% if p.can_edit %}<td><form class="inline-form" method="post" action="{{ url_for('delete_metric', iid=inv.id, mid=m.id) }}"><button class="btn btn-danger btn-small" type="submit">Remove<span class="visually-hidden"> {{ m.name }}</span></button></form></td>{% endif %}</tr>
+  {% else %}<tr><td colspan="8">No metrics yet.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% if p.can_edit %}
+<form method="post" action="{{ url_for('add_metric', iid=inv.id) }}" novalidate>
+  <fieldset><legend>Add a quantified metric</legend>
+  <div class="grid-form">
+    <div class="field"><label for="m_name">Name</label><input type="text" id="m_name" name="name"></div>
+    <div class="field"><label for="m_unit">Unit</label><input type="text" id="m_unit" name="unit"></div>
+    <div class="field"><label for="m_dir">Direction</label><select id="m_dir" name="direction"><option value="higher">Higher is better</option><option value="lower">Lower is better</option></select></div>
+    <div class="field"><label for="m_base">Baseline</label><input type="number" step="any" id="m_base" name="baseline"></div>
+    <div class="field"><label for="m_target">Target</label><input type="number" step="any" id="m_target" name="target"></div>
+    <div class="field"><label for="m_date">Target date</label><input type="date" id="m_date" name="target_date"></div>
+    <div class="field"><label for="m_owner">Benefit owner</label><select id="m_owner" name="owner_id"><option value="">Choose…</option>{% for u in users %}<option value="{{ u.id }}" {{ 'selected' if u.id == current_user.id }}>{{ u.name }}</option>{% endfor %}</select></div>
+  </div>
+  <div class="actions"><button class="btn" type="submit">Add metric</button></div></fieldset>
+</form>
+{% endif %}
+
+<h3>Financial benefits</h3>
+<div class="table-wrap"><table>
+  <caption class="visually-hidden">Financial benefits</caption>
+  <thead><tr><th scope="col">Type</th><th scope="col">Description</th><th scope="col" class="num">Amount</th>{% if p.can_edit %}<th scope="col">Action</th>{% endif %}</tr></thead>
+  <tbody>{% for b in fin %}<tr><th scope="row">{{ b.type }}</th><td>{{ b.description }}</td><td class="num">{{ b.amount|eur }}</td>
+    {% if p.can_edit %}<td><form class="inline-form" method="post" action="{{ url_for('delete_financial', iid=inv.id, bid=b.id) }}"><button class="btn btn-danger btn-small" type="submit">Remove<span class="visually-hidden"> {{ b.description }}</span></button></form></td>{% endif %}</tr>
+  {% else %}<tr><td colspan="4">None recorded.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% if p.can_edit %}
+<form method="post" action="{{ url_for('add_financial', iid=inv.id) }}" novalidate>
+  <fieldset><legend>Add a financial benefit</legend><div class="grid-form">
+    <div class="field"><label for="f_type">Type</label><select id="f_type" name="type">{% for t in fin_types %}<option>{{ t }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="f_desc">Description</label><input type="text" id="f_desc" name="description"></div>
+    <div class="field"><label for="f_amt">Amount (€)</label><input type="number" step="any" min="0" id="f_amt" name="amount"></div>
+  </div><div class="actions"><button class="btn" type="submit">Add financial benefit</button></div></fieldset>
+</form>
+{% endif %}
+
+<h3>Non-financial benefits</h3>
+<div class="table-wrap"><table>
+  <caption class="visually-hidden">Non-financial benefits</caption>
+  <thead><tr><th scope="col">Category</th><th scope="col">Description</th>{% if p.can_edit %}<th scope="col">Action</th>{% endif %}</tr></thead>
+  <tbody>{% for b in nonfin %}<tr><th scope="row">{{ b.category }}</th><td>{{ b.description }}</td>
+    {% if p.can_edit %}<td><form class="inline-form" method="post" action="{{ url_for('delete_nonfinancial', iid=inv.id, bid=b.id) }}"><button class="btn btn-danger btn-small" type="submit">Remove<span class="visually-hidden"> {{ b.description }}</span></button></form></td>{% endif %}</tr>
+  {% else %}<tr><td colspan="3">None recorded.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% if p.can_edit %}
+<form method="post" action="{{ url_for('add_nonfinancial', iid=inv.id) }}" novalidate>
+  <fieldset><legend>Add a non-financial benefit</legend><div class="grid-form">
+    <div class="field"><label for="n_cat">Category</label><select id="n_cat" name="category">{% for t in nonfin_cats %}<option>{{ t }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="n_desc">Description</label><input type="text" id="n_desc" name="description"></div>
+  </div><div class="actions"><button class="btn" type="submit">Add non-financial benefit</button></div></fieldset>
+</form>
+{% endif %}
+
+<h3>Strategic alignment</h3>
+{% if p.can_edit %}
+<form method="post" action="{{ url_for('save_strategic', iid=inv.id) }}">
+  <div class="field"><label for="statement">Statement</label><textarea id="statement" name="statement">{{ inv.strategic_statement }}</textarea></div>
+  <fieldset><legend>Priorities this investment supports</legend>
+    {% for t in all_tags %}<label class="check"><input type="checkbox" name="tags" value="{{ t }}" {{ 'checked' if t in tags }}> {{ t }}</label>{% endfor %}
+    <div class="field" style="margin-top:10px"><label for="other_tag">Other priority (optional)</label><input type="text" id="other_tag" name="other_tag"></div>
+  </fieldset>
+  <button class="btn" type="submit">Save strategic alignment</button>
+</form>
+{% else %}
+<p class="pre">{{ inv.strategic_statement or '—' }}</p>
+<p>Tags: {% if tags %}{{ tags|join(', ') }}{% else %}none{% endif %}</p>
+{% endif %}
+{% endblock %}

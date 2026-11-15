@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<h1>Audit log</h1>
+<p class="lead">A read-only record of every change. Showing the latest 500 matching entries.</p>
+<form class="filters" method="get" aria-label="Filter audit log">
+  <div class="field"><label for="a_inv">Investment</label>
+    <select id="a_inv" name="investment"><option value="">All</option><option value="none" {{ 'selected' if f_inv == 'none' }}>Not linked to an investment</option>
+      {% for i in invs %}<option value="{{ i.id }}" {{ 'selected' if i.id|string == f_inv }}>{{ i.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="a_user">User</label>
+    <select id="a_user" name="user"><option value="">All</option>
+      {% for u in users %}<option value="{{ u.id }}" {{ 'selected' if u.id|string == f_user }}>{{ u.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="a_q">Search area, field or values</label><input type="text" id="a_q" name="q" value="{{ f_q }}"></div>
+  <div class="actions"><button class="btn" type="submit">Apply filters</button><a href="{{ url_for('audit_log') }}">Clear filters</a></div>
+</form>
+{% include "_audit_table.html" %}
+{% endblock %}

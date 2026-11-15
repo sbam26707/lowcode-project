@@ -1,0 +1,48 @@
+{% extends "inv_base.html" %}
+{% block tab %}
+<h2>Overview</h2>
+{% if returned %}
+<div class="msg msg-warning" role="status">Returned for rework at stage “{{ returned.stage_name }}” by {{ returned.approver_name }} on {{ returned.decision_date|dmy }}.
+  <span class="pre" style="font-weight:normal;display:block;margin-top:6px">Comments: {{ returned.comments }}</span></div>
+{% endif %}
+{% if inv.status == 'In approval' and current_approver %}
+<p>Waiting for <strong>{{ current_approver.name }}</strong> ({{ current_approver.title }}) at stage {{ inv.current_stage }}: {{ s.stage_label.split('. ',1)[1] }}.</p>
+{% endif %}
+{% if p.can_edit %}
+<form method="post" action="{{ url_for('save_overview', iid=inv.id) }}" novalidate>
+  <div class="field"><label for="name">Name</label><input type="text" id="name" name="name" value="{{ inv.name }}" required></div>
+  <div class="field"><label for="description">Short description</label><textarea id="description" name="description">{{ inv.description }}</textarea></div>
+  <button class="btn" type="submit">Save overview</button>
+</form>
+{% else %}
+<dl class="facts">
+  <dt>Description</dt><dd class="pre">{{ inv.description or '—' }}</dd>
+</dl>
+{% endif %}
+<h3>Summary</h3>
+<dl class="facts">
+  <dt>Owner</dt><dd>{{ inv.owner_name }}</dd>
+  <dt>Overall status</dt><dd>{{ status_badge(inv.status) }} {{ s.stage_label }}</dd>
+  <dt>Created</dt><dd>{{ inv.created_at|dmy }}</dd>
+  <dt>Last updated</dt><dd>{{ inv.updated_at|dmy }}</dd>
+  <dt>Budget / forecast</dt><dd>{{ s.budget|eur }} / {{ s.forecast|eur }} ({{ variance_text(s.variance, s.budget) if s.cost_rows else 'no cost figures' }})</dd>
+  <dt>Current phase RAG</dt><dd>{{ rag_badge(s.rag_current, s.rag.current.days if s.rag.current else None) }} {% if s.rag.current %}<span class="muted">({{ s.rag.current.phase }})</span>{% endif %}</dd>
+  <dt>Go-live RAG</dt><dd>{{ rag_badge(s.rag_golive, s.rag.golive.days if s.rag.golive else None) }}</dd>
+  <dt>Capacity</dt><dd>{% if over_allocated %}<span class="badge warn-badge"><span aria-hidden="true">▲</span> Warning: contributes to over-allocation</span>{% else %}No over-allocation{% endif %}</dd>
+</dl>
+
+{% if inv.status in ('Draft', 'Returned for rework') %}
+<h3>Ready to submit?</h3>
+<ul class="checklist">
+  <li class="{{ 'ok' if checks.metrics else 'todo' }}">At least one quantified metric (<a href="{{ url_for('investment_tab', iid=inv.id, tab='value') }}">Value tab</a>) — {{ 'done' if checks.metrics else 'missing' }}</li>
+  <li class="{{ 'ok' if checks.phases else 'todo' }}">At least one phase (<a href="{{ url_for('investment_tab', iid=inv.id, tab='timeline') }}">Timeline tab</a>) — {{ 'done' if checks.phases else 'missing' }}</li>
+  <li class="{{ 'ok' if checks.costs else 'todo' }}">Cost figures (<a href="{{ url_for('investment_tab', iid=inv.id, tab='cost') }}">Cost tab</a>) — {{ 'done' if checks.costs else 'missing' }}</li>
+</ul>
+{% if p.can_edit %}
+<form method="post" action="{{ url_for('submit', iid=inv.id) }}">
+  <button class="btn" type="submit">{{ 'Resubmit for approval' if inv.status == 'Returned for rework' else 'Submit for approval' }}</button>
+  {% if not ready %}<p class="hint">Submission will be refused until every item above is done.</p>{% endif %}
+</form>
+{% else %}<p class="muted">Only the owner ({{ inv.owner_name }}) can edit and submit this investment.</p>{% endif %}
+{% endif %}
+{% endblock %}

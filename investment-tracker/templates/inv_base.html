@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ inv.name }}{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{{ url_for('investments') }}">Investments</a> &rsaquo; {{ inv.name }}</p>
+<h1>{{ inv.name }}</h1>
+<ul class="meta">
+  <li>Owner: <strong>{{ inv.owner_name }}</strong></li>
+  <li>Status: {{ status_badge(inv.status) }}</li>
+  {% if inv.status == 'In approval' %}<li>At stage {{ inv.current_stage }} of 5</li>{% endif %}
+  {% if over_allocated %}<li><span class="badge warn-badge"><span aria-hidden="true">▲</span> Warning: over-allocated resource</span></li>{% endif %}
+</ul>
+<nav aria-label="Investment sections">
+  <ul class="tabs">
+    {% for key, label in tabs %}
+    <li><a href="{{ url_for('investment_tab', iid=inv.id, tab=key) }}" {{ 'aria-current=page' if key == tab }}>{{ label }}</a></li>
+    {% endfor %}
+  </ul>
+</nav>
+{% block tab %}{% endblock %}
+{% endblock %}

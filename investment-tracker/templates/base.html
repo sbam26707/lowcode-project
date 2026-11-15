@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en-IE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ app_name }}{% endblock %} – {{ app_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="site-header" role="banner">
+  <div class="wrap">
+    <a class="site-title" href="{{ url_for('dashboard') }}">{{ app_name }}</a>
+    <form class="role-form" method="post" action="{{ url_for('switch_user') }}">
+      <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+      <label for="user_id">Act as (demo role switcher)</label>
+      <select id="user_id" name="user_id">
+        {% for u in all_users %}
+        <option value="{{ u.id }}" {{ 'selected' if u.id == current_user.id }}>{{ u.name }} – {{ u.title }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-secondary btn-small" type="submit">Switch</button>
+    </form>
+  </div>
+  <div class="wrap"><p class="who">Signed in as <strong>{{ current_user.name }}</strong> ({{ current_user.title }})</p></div>
+</header>
+<nav class="site-nav" aria-label="Main">
+  <div class="wrap">
+    <ul>
+      <li><a href="{{ url_for('dashboard') }}" {{ 'aria-current=page' if request.endpoint == 'dashboard' }}>Dashboard</a></li>
+      <li><a href="{{ url_for('investments') }}" {{ 'aria-current=page' if request.endpoint in ('investments','investment_new','investment_tab') }}>Investments</a></li>
+      <li><a href="{{ url_for('capacity_pool') }}" {{ 'aria-current=page' if request.endpoint == 'capacity_pool' }}>Capacity pool</a></li>
+      <li><a href="{{ url_for('audit_log') }}" {{ 'aria-current=page' if request.endpoint == 'audit_log' }}>Audit log</a></li>
+    </ul>
+  </div>
+</nav>
+<main id="main" class="wrap" role="main">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div aria-live="polite">
+      {% set errs = messages | selectattr(0, 'equalto', 'error') | list %}
+      {% if errs|length > 1 %}
+        <div class="error-summary" role="alert">
+          <h2>There is a problem</h2>
+          <ul>{% for c, m in errs %}<li>{{ m }}</li>{% endfor %}</ul>
+        </div>
+      {% elif errs|length == 1 %}
+        <div class="msg msg-error" role="alert"><span class="visually-hidden">Error: </span>{{ errs[0][1] }}</div>
+      {% endif %}
+      {% for c, m in messages if c != 'error' %}
+        <div class="msg msg-{{ c }}" role="status"><span class="visually-hidden">{{ 'Warning' if c == 'warning' else 'Success' }}: </span>{{ m }}</div>
+      {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="site-footer" role="contentinfo">
+  <div class="wrap">Proof of concept with fictional data. Amounts in euro, exclusive of VAT. Dates shown as DD/MM/YYYY.</div>
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

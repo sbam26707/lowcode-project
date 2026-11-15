@@ -1,0 +1,45 @@
+{% extends "inv_base.html" %}
+{% block tab %}
+<h2>Timeline</h2>
+<p>Current phase RAG: {{ rag_badge(rag.current.rag if rag.current else None, rag.current.days if rag.current else None) }}
+  {% if rag.current %}<span class="muted">({{ rag.current.phase }})</span>{% endif %}
+  &nbsp; Go-live RAG: {{ rag_badge(rag.golive.rag if rag.golive else None, rag.golive.days if rag.golive else None) }}</p>
+<p class="muted">Slippage = forecast end (actual end if complete) minus planned end. Green: under 7 days late. Amber: 7 to 20 days. Red: 21 days or more.</p>
+{% if not phases %}
+  <p>No phases yet.</p>
+  {% if p.can_planned %}
+  <form method="post" action="{{ url_for('add_default_phases', iid=inv.id) }}" novalidate>
+    <div class="field"><label for="start_date">Add default phases (Initiation, Design, Build, Test, Deploy, Close) from start date</label><input type="date" id="start_date" name="start_date"></div>
+    <button class="btn" type="submit">Add default phases</button>
+  </form>{% endif %}
+{% endif %}
+{% for ph in phases %}
+<form method="post" action="{{ url_for('save_phase', iid=inv.id, pid=ph.id) }}" novalidate>
+  <fieldset>
+    <legend>{{ ph.position }}. {{ ph.name }} — {{ rag_badge(ph.rag, ph.days_late) }} {{ status_badge(ph.status) }}</legend>
+    <div class="grid-form">
+      <div class="field"><label for="ps{{ ph.id }}">Planned start</label><input type="date" id="ps{{ ph.id }}" name="planned_start" value="{{ ph.planned_start }}" {{ '' if p.can_planned else 'disabled' }}></div>
+      <div class="field"><label for="pe{{ ph.id }}">Planned end</label><input type="date" id="pe{{ ph.id }}" name="planned_end" value="{{ ph.planned_end }}" {{ '' if p.can_planned else 'disabled' }}></div>
+      <div class="field"><label for="fs{{ ph.id }}">Forecast start</label><input type="date" id="fs{{ ph.id }}" name="forecast_start" value="{{ ph.forecast_start or '' }}" {{ '' if p.can_forecast else 'disabled' }}></div>
+      <div class="field"><label for="fe{{ ph.id }}">Forecast end</label><input type="date" id="fe{{ ph.id }}" name="forecast_end" value="{{ ph.forecast_end or '' }}" {{ '' if p.can_forecast else 'disabled' }}></div>
+      <div class="field"><label for="as{{ ph.id }}">Actual start</label><input type="date" id="as{{ ph.id }}" name="actual_start" value="{{ ph.actual_start or '' }}" {{ '' if p.can_forecast else 'disabled' }}></div>
+      <div class="field"><label for="ae{{ ph.id }}">Actual end</label><input type="date" id="ae{{ ph.id }}" name="actual_end" value="{{ ph.actual_end or '' }}" {{ '' if p.can_forecast else 'disabled' }}></div>
+      <div class="field"><label for="st{{ ph.id }}">Status</label><select id="st{{ ph.id }}" name="status" {{ '' if p.can_forecast else 'disabled' }}>{% for s in phase_statuses %}<option {{ 'selected' if s == ph.status }}>{{ s }}</option>{% endfor %}</select></div>
+    </div>
+    {% if p.can_forecast %}<div class="actions"><button class="btn btn-small" type="submit">Save {{ ph.name }}</button></div>{% endif %}
+  </fieldset>
+</form>
+{% if p.can_planned %}
+<form method="post" action="{{ url_for('delete_phase', iid=inv.id, pid=ph.id) }}" style="margin:-8px 0 18px"><button class="btn btn-danger btn-small" type="submit">Remove {{ ph.name }}</button></form>
+{% endif %}
+{% endfor %}
+{% if p.can_planned and phases %}
+<form method="post" action="{{ url_for('add_phase', iid=inv.id) }}" novalidate>
+  <fieldset><legend>Add a phase</legend><div class="grid-form">
+    <div class="field"><label for="np_name">Name</label><input type="text" id="np_name" name="name" list="phase-names"><datalist id="phase-names">{% for n in phase_names %}<option value="{{ n }}">{% endfor %}</datalist></div>
+    <div class="field"><label for="np_ps">Planned start</label><input type="date" id="np_ps" name="planned_start"></div>
+    <div class="field"><label for="np_pe">Planned end</label><input type="date" id="np_pe" name="planned_end"></div>
+  </div><div class="actions"><button class="btn" type="submit">Add phase</button></div></fieldset>
+</form>
+{% endif %}
+{% endblock %}

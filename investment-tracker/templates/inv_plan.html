@@ -1,0 +1,14 @@
+{% extends "inv_base.html" %}
+{% block tab %}
+<h2>Delivery plan</h2>
+{% if p.can_edit %}
+<form method="post" action="{{ url_for('save_plan', iid=inv.id) }}">
+  {% for key, label in fields %}
+  <div class="field"><label for="{{ key }}">{{ label }}</label><textarea id="{{ key }}" name="{{ key }}">{{ inv[key] }}</textarea></div>
+  {% endfor %}
+  <button class="btn" type="submit">Save plan</button>
+</form>
+{% else %}
+<dl class="facts">{% for key, label in fields %}<dt>{{ label }}</dt><dd class="pre">{{ inv[key] or '—' }}</dd>{% endfor %}</dl>
+{% endif %}
+{% endblock %}

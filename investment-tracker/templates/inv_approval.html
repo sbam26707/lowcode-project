@@ -1,0 +1,39 @@
+{% extends "inv_base.html" %}
+{% block tab %}
+<h2>Approval</h2>
+<ol class="stage-track" aria-label="Approval stages">
+{% for a in approvals %}
+  <li class="{{ 'is-current' if inv.status == 'In approval' and inv.current_stage == a.stage else ('is-done' if a.status == 'Approved' else '') }}">{{ a.stage }}. {{ a.stage_name }}<br>{{ status_badge(a.status) }}</li>
+{% endfor %}
+</ol>
+{% if p.can_decide %}
+<div class="panel">
+  <h3 style="margin-top:0">Record your decision: stage {{ inv.current_stage }}</h3>
+  <form method="post" action="{{ url_for('decide', iid=inv.id) }}" novalidate>
+    <fieldset><legend>Decision</legend>
+      <label class="check"><input type="radio" name="decision" value="approve" required> Approve</label>
+      <label class="check"><input type="radio" name="decision" value="reject"> Reject (comments required)</label>
+      <label class="check"><input type="radio" name="decision" value="return"> Return for rework (comments required)</label>
+    </fieldset>
+    <div class="field"><label for="comments">Comments</label><textarea id="comments" name="comments"></textarea></div>
+    <div class="field"><label for="conditions">Conditions attached to approval (optional)</label><textarea id="conditions" name="conditions"></textarea></div>
+    <button class="btn" type="submit">Record decision</button>
+  </form>
+</div>
+{% elif inv.status == 'In approval' %}
+<p class="muted">You cannot act on this stage as the current user. Only the named approver for stage {{ inv.current_stage }} can.</p>
+{% endif %}
+<h3>Stages</h3>
+<div class="table-wrap"><table>
+  <caption class="visually-hidden">Current state of each approval stage</caption>
+  <thead><tr><th scope="col">Stage</th><th scope="col">Approver</th><th scope="col">Status</th><th scope="col">Decision date</th></tr></thead>
+  <tbody>{% for a in approvals %}<tr><th scope="row">{{ a.stage }}. {{ a.stage_name }}</th><td>{{ a.approver_name or '—' }}{% if a.approver_title %} <span class="muted">({{ a.approver_title }})</span>{% endif %}</td><td>{{ status_badge(a.status) }}</td><td>{{ a.decision_date|dmy }}</td></tr>{% endfor %}</tbody>
+</table></div>
+<h3>Approval history</h3>
+<div class="table-wrap"><table>
+  <caption class="visually-hidden">All recorded approval decisions</caption>
+  <thead><tr><th scope="col">Stage</th><th scope="col">Approver</th><th scope="col">Decision</th><th scope="col">Date</th><th scope="col">Comments</th><th scope="col">Conditions</th></tr></thead>
+  <tbody>{% for h in history %}<tr><th scope="row">{{ h.stage }}. {{ h.stage_name }}</th><td>{{ h.approver_name }}</td><td>{{ status_badge(h.decision) }}</td><td>{{ h.decision_date|dmy }}</td><td class="pre">{{ h.comments or '—' }}</td><td class="pre">{{ h.conditions or '—' }}</td></tr>
+  {% else %}<tr><td colspan="6">No decisions recorded yet.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

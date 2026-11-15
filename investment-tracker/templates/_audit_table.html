@@ -1,0 +1,15 @@
+<p role="status">{{ entries|length }} entr{{ 'y' if entries|length == 1 else 'ies' }}.</p>
+<div class="table-wrap">
+<table>
+  <caption class="visually-hidden">Audit entries</caption>
+  <thead><tr><th scope="col">Date and time</th><th scope="col">User</th>
+    {% if show_inv|default(true) %}<th scope="col">Investment</th>{% endif %}
+    <th scope="col">Area</th><th scope="col">Field</th><th scope="col">Old value</th><th scope="col">New value</th></tr></thead>
+  <tbody>
+  {% for e in entries %}
+  <tr><td>{{ e.ts|dmyhm }}</td><td>{{ e.user_name }}</td>
+    {% if show_inv|default(true) %}<td>{% if e.investment_id %}<a href="{{ url_for('investment_tab', iid=e.investment_id, tab='history') }}">{{ e.inv_name }}</a>{% else %}—{% endif %}</td>{% endif %}
+    <td>{{ e.area }}</td><td>{{ e.field }}</td><td class="pre">{{ e.old_value|auditval or '—' }}</td><td class="pre">{{ e.new_value|auditval or '—' }}</td></tr>
+  {% else %}<tr><td colspan="7">No entries.</td></tr>{% endfor %}
+  </tbody>
+</table></div>

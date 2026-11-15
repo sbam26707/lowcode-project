@@ -1,0 +1,31 @@
+{% extends "inv_base.html" %}
+{% block tab %}
+<h2>Capacity (delivery resource)</h2>
+{% if mine %}
+<div class="msg msg-warning" role="status">Warning: this investment contributes to over-allocation.</div>
+<div class="table-wrap"><table>
+  <caption class="visually-hidden">Over-allocations this investment contributes to</caption>
+  <thead><tr><th scope="col">Role</th><th scope="col">Month</th><th scope="col" class="num">Demand</th><th scope="col" class="num">Pool</th><th scope="col" class="num">Shortfall</th></tr></thead>
+  <tbody>{% for o in mine %}<tr><th scope="row">{{ o.role }}</th><td>{{ o.month|month }}</td><td class="num">{{ o.demand|num }}</td><td class="num">{{ o.pool|num }}</td><td class="num">{{ o.shortfall|num }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+<div class="table-wrap"><table>
+  <caption class="visually-hidden">Resource demand by phase and role</caption>
+  <thead><tr><th scope="col">Phase</th><th scope="col">Forecast dates</th><th scope="col">Role</th><th scope="col" class="num">FTEs</th>{% if p.can_edit %}<th scope="col">Action</th>{% endif %}</tr></thead>
+  <tbody>{% for r in res %}<tr><th scope="row">{{ r.phase_name }}</th><td>{{ r.forecast_start|dmy }} to {{ r.forecast_end|dmy }}</td><td>{{ r.role }}</td><td class="num">{{ r.ftes|num }}</td>
+    {% if p.can_edit %}<td><form class="inline-form" method="post" action="{{ url_for('delete_resource', iid=inv.id, rid=r.id) }}"><button class="btn btn-danger btn-small" type="submit">Remove<span class="visually-hidden"> {{ r.role }} in {{ r.phase_name }}</span></button></form></td>{% endif %}</tr>
+  {% else %}<tr><td colspan="5">No resource demand recorded.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% if p.can_edit %}
+  {% if phases %}
+  <form method="post" action="{{ url_for('add_resource', iid=inv.id) }}" novalidate>
+    <fieldset><legend>Add resource demand</legend><div class="grid-form">
+      <div class="field"><label for="r_phase">Phase</label><select id="r_phase" name="phase_id">{% for ph in phases %}<option value="{{ ph.id }}">{{ ph.name }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="r_role">Role</label><select id="r_role" name="role">{% for r in roles %}<option>{{ r }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="r_ftes">FTEs required</label><input type="number" step="0.1" min="0" id="r_ftes" name="ftes"></div>
+    </div><div class="actions"><button class="btn" type="submit">Add demand</button></div></fieldset>
+  </form>
+  {% else %}<p class="muted">Add phases on the Timeline tab first.</p>{% endif %}
+{% endif %}
+<p><a href="{{ url_for('capacity_pool') }}">View the organisation-wide capacity pool and over-allocation report</a></p>
+{% endblock %}

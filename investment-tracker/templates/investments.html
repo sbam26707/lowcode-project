@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Investments{% endblock %}
+{% block content %}
+<h1>Investments</h1>
+<p class="lead">All IT investments in the portfolio. Select a column heading to sort.</p>
+{% if current_user.grp == 'owner' %}<p><a class="btn" href="{{ url_for('investment_new') }}">Create new investment</a></p>{% endif %}
+<form class="filters" method="get" aria-label="Filter investments">
+  <div class="field"><label for="f_status">Status</label>
+    <select id="f_status" name="status"><option value="">All</option>
+      {% for s in statuses %}<option {{ 'selected' if s == f_status }}>{{ s }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="f_owner">Owner</label>
+    <select id="f_owner" name="owner"><option value="">All</option>
+      {% for o in owners %}<option value="{{ o.id }}" {{ 'selected' if o.id|string == f_owner }}>{{ o.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="f_cur">Current phase RAG</label>
+    <select id="f_cur" name="rag_current"><option value="">All</option>
+      {% for r in ['Green','Amber','Red'] %}<option {{ 'selected' if r == f_cur }}>{{ r }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="f_gl">Go-live RAG</label>
+    <select id="f_gl" name="rag_golive"><option value="">All</option>
+      {% for r in ['Green','Amber','Red'] %}<option {{ 'selected' if r == f_gl }}>{{ r }}</option>{% endfor %}</select></div>
+  <div class="actions"><button class="btn" type="submit">Apply filters</button>
+    <a href="{{ url_for('investments') }}">Clear filters</a></div>
+</form>
+{% macro th(key, label, cls='') %}
+<th scope="col" class="{{ cls }}" {% if sort == key %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}"{% endif %}>
+  <a href="{{ sort_urls[key] }}">{{ label }}{% if sort == key %} <span aria-hidden="true">{{ '▲' if direction == 'asc' else '▼' }}</span>{% endif %}</a></th>
+{% endmacro %}
+<p role="status">{{ sums|length }} investment{{ '' if sums|length == 1 else 's' }} shown.</p>
+<div class="table-wrap">
+<table>
+  <caption class="visually-hidden">Investments</caption>
+  <thead><tr>{{ th('name','Name') }}{{ th('owner','Owner') }}{{ th('status','Status') }}{{ th('stage','Approval stage') }}
+    <th scope="col" class="num">Budget</th><th scope="col" class="num">Forecast</th>{{ th('variance','Cost variance','num') }}
+    {{ th('rag_current','Current phase RAG') }}{{ th('rag_golive','Go-live RAG') }}</tr></thead>
+  <tbody>
+  {% for s in sums %}
+  <tr {{ 'class=flag' if s.over_allocated }}>
+    <th scope="row"><a href="{{ url_for('investment_tab', iid=s.id, tab='overview') }}">{{ s.name }}</a>
+      {% if s.over_allocated %}<br><span class="badge warn-badge"><span aria-hidden="true">▲</span> Warning: over-allocated</span>{% endif %}</th>
+    <td>{{ s.owner_name }}</td><td>{{ status_badge(s.status) }}</td><td>{{ s.stage_label }}</td>
+    <td class="num">{{ s.budget|eur }}</td><td class="num">{{ s.forecast|eur }}</td>
+    <td class="num">{{ variance_text(s.variance, s.budget) if s.cost_rows else '—' }}</td>
+    <td>{{ rag_badge(s.rag_current, s.rag.current.days if s.rag.current else None) }}</td>
+    <td>{{ rag_badge(s.rag_golive, s.rag.golive.days if s.rag.golive else None) }}</td>
+  </tr>
+  {% else %}<tr><td colspan="9">No investments match the filters.</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}
