@@ -71,6 +71,16 @@ def form_str(name):
     return (request.form.get(name) or "").strip()
 
 
+MAX_NAME_LEN = 120
+MAX_DESC_LEN = 2000
+
+
+def check_len(errors, value, label, limit):
+    if len(value) > limit:
+        errors.append(f"{label} must be {limit} characters or fewer.")
+        return False
+    return True
+
 def form_num(name, errors, label, required=True, minimum=None):
     raw = form_str(name)
     if raw == "":
@@ -414,6 +424,8 @@ def investment_new():
             errors.append("Enter a name for the investment.")
         elif row("SELECT 1 FROM investments WHERE lower(name)=lower(?)", (name,)):
             errors.append("An investment with that name already exists. Names must be unique.")
+        check_len(errors, name, "The investment name", MAX_NAME_LEN)
+        check_len(errors, desc, "The description", MAX_DESC_LEN)    
         if errors:
             for e in errors:
                 flash(e, "error")
@@ -553,6 +565,8 @@ def save_overview(iid):
         errors.append("Enter a name for the investment.")
     elif row("SELECT 1 FROM investments WHERE lower(name)=lower(?) AND id<>?", (name, iid)):
         errors.append("An investment with that name already exists. Names must be unique.")
+    check_len(errors, name, "The investment name", MAX_NAME_LEN)    
+    check_len(errors, desc, "The description", MAX_DESC_LEN)        
     if errors:
         return fail(errors, iid, "overview")
     audit(iid, "Investment", "name", inv["name"], name)

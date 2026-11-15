@@ -10,8 +10,8 @@
 {% endif %}
 {% if p.can_edit %}
 <form method="post" action="{{ url_for('save_overview', iid=inv.id) }}" novalidate>
-  <div class="field"><label for="name">Name</label><input type="text" id="name" name="name" value="{{ inv.name }}" required></div>
-  <div class="field"><label for="description">Short description</label><textarea id="description" name="description">{{ inv.description }}</textarea></div>
+  <div class="field"><label for="name">Name</label><input type="text" id="name" name="name" value="{{ inv.name }}" maxlength="120" required></div>
+  <div class="field"><label for="description">Short description</label><textarea id="description" name="description" maxlength="2000">{{ inv.description }}</textarea></div>
   <button class="btn" type="submit">Save overview</button>
 </form>
 {% else %}

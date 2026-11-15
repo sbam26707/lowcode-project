@@ -8,11 +8,11 @@
   <div class="field">
     <label for="name">Investment name</label>
     <p class="hint" id="name-hint">Must be unique.</p>
-    <input type="text" id="name" name="name" value="{{ name }}" aria-describedby="name-hint" required>
+    <input type="text" id="name" name="name" maxlength="120"value="{{ name }}" aria-describedby="name-hint" required>
   </div>
   <div class="field">
     <label for="description">Short description</label>
-    <textarea id="description" name="description">{{ description }}</textarea>
+    <textarea id="description" name="description" maxlength="2000">{{ description }}</textarea>
   </div>
   <div class="actions">
     <button class="btn" type="submit">Create investment</button>
